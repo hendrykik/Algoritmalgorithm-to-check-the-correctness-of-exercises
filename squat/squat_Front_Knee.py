@@ -1,111 +1,113 @@
 import cv2
 import mediapipe as mp
-import numpy as np
+from main import point_names
+import math
 
-# Inicjalizacja obiektu MediaPipe
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
-# Słownik do mapowania indeksów na nazwy punktów
-point_names = {
-    0: "nose",
-    1: "left_eye_inner",
-    2: "left_eye",
-    3: "left_eye_outer",
-    4: "right_eye_inner",
-    5: "right_eye",
-    6: "right_eye_outer",
-    7: "left_ear",
-    8: "right_ear",
-    9: "mouth_left",
-    10: "mouth_right",
-    11: "left_shoulder",
-    12: "right_shoulder",
-    13: "left_elbow",
-    14: "right_elbow",
-    15: "left_wrist",
-    16: "right_wrist",
-    17: "left_pinky",
-    18: "right_pinky",
-    19: "left_index",
-    20: "right_index",
-    21: "left_thumb",
-    22: "right_thumb",
-    23: "left_hip",
-    24: "right_hip",
-    25: "left_knee",
-    26: "right_knee",
-    27: "left_ankle",
-    28: "right_ankle",
-    29: "left_heel",
-    30: "right_heel",
-    31: "left_foot_index",
-    32: "right_foot_index",
-}
 
 def main():
-    # Inicjalizacja kamery wideo
-    cap = cv2.VideoCapture('//Users/janzemlo/Inzynierka/front.mp4')
+    cap = cv2.VideoCapture('//Users/janzemlo/Inzynierka/front_new.mp4')
+    fps = cap.get(cv2.CAP_PROP_FPS)
 
-    # max_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    # max_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    #
-    # print(max_width, max_height)
-
-    max_depth_hip = 0
-    max_depth_knee = 0
-
-    # Inicjalizacja modelu śledzenia postawy
     with mp_pose.Pose(min_detection_confidence=0.7, min_tracking_confidence=0.7) as pose:
+        tab_hip, tab_heel, tab_foot_index = [], [], []
+        i = 0
+
         while cap.isOpened():
-            # Odczyt klatki z kamery
             ret, frame = cap.read()
             if not ret:
                 break
 
-            # Konwersja klatki na format RGB
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            # Detekcja postawy na podstawie klatki
             results = pose.process(frame_rgb)
 
-            # Rysowanie szkieletu na obrazie wraz z nazwami punktów
             if results.pose_landmarks:
-                for id, landmark in enumerate(results.pose_landmarks.landmark):
-                    if id in {11, 12, 25, 26, 27, 28, 23, 24}:
-                        h, w, c = frame.shape
-                        cx, cy = int(landmark.x * w), int(landmark.y * h)
-                        cv2.circle(frame, (cx, cy), 5, (255, 0, 0), cv2.FILLED)
-                        point_name = point_names.get(id, "unknown")
-                        cv2.putText(frame, point_name, (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
-                        if id == 23:
-                            if max_depth_hip < int(cy):
-                                max_depth_hip = int(cy)
-                                max_depth_knee = int(results.pose_landmarks.landmark[25].y * h)
-                                # print(max_depth_hip)
-                                # print(int(results.pose_landmarks.landmark[25].y * h))
-                                #max_depth_knee = int(cy)
+                h, w, c = frame.shape
+                if (i == 0 and
+                        (not check_move(tab_hip, tab_foot_index, tab_heel, fps, w, h))
+                ):
+                    tab_hip.append((
+                        int(results.pose_landmarks.landmark[23].x * w),
+                        int(results.pose_landmarks.landmark[23].y * h),
+                        int(results.pose_landmarks.landmark[24].x * w),
+                        int(results.pose_landmarks.landmark[24].y * h)
+                    ))
 
-            # Wyświetlenie klatki z szkieletem
-            cv2.circle(frame, (500, 827), 50, (255, 0, 0), thickness=-1)  # Niebieski kolor: (255, 0, 0)
+                    tab_heel.append((
+                        int(results.pose_landmarks.landmark[29].x * w),
+                        int(results.pose_landmarks.landmark[29].y * h),
+                        int(results.pose_landmarks.landmark[30].x * w),
+                        int(results.pose_landmarks.landmark[30].y * h)
+                    ))
+
+                    tab_foot_index.append((
+                        int(results.pose_landmarks.landmark[31].x * w),
+                        int(results.pose_landmarks.landmark[31].y * h),
+                        int(results.pose_landmarks.landmark[32].x * w),
+                        int(results.pose_landmarks.landmark[32].y * h)
+                    ))
+                elif i != 1:
+                    # print("Ruch sie zaczał")
+                    check_feet(tab_heel[-1], tab_foot_index[-1])
+                    i = 1
+
+                print_skielet(results, frame, h, w)
 
             cv2.imshow('Pose Estimation', frame)
 
-            # Przerwanie pętli po naciśnięciu klawisza 'q'
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-        # Zwolnienie zasobów
-        print(max_depth_hip)
-        print(max_depth_knee)
-
-        if max_depth_hip < max_depth_knee:
-            print("Poprawna głębokość przysiadu")
-        else:
-            print("Niepoprawna głębokość przysiadu")
-
         cap.release()
         cv2.destroyAllWindows()
+
+
+def calculate_angle(x1, y1, x2, y2):
+    angle_rad = math.atan2(y2 - y1, x2 - x1)
+    angle_deg = math.degrees(angle_rad)
+    return angle_deg
+
+
+def check_knee():
+    das = 2
+
+
+def check_feet(tab_heel, tabl_foot_index):
+    angle_left = int(abs(calculate_angle(tab_heel[0], tab_heel[1], tabl_foot_index[0], tabl_foot_index[1])))
+    angle_right = int(abs(calculate_angle(tabl_foot_index[2], tabl_foot_index[3], tab_heel[2], tab_heel[3])))
+
+    print(f"Kąt lewej stopy wynosi {angle_right}")
+    print(f"Kąt prawej stopy wynosi {angle_left}")
+
+
+def check_move(tab_hip, tab_heel, tab_foot_index, fps, w, h):
+    before = int(len(tab_hip) - fps/2)
+    if before > 0:
+        threshold_percentage = 0.7
+        if (abs(tab_heel[-1][0] - tab_heel[before][0]) < abs(tab_heel[before][0]) * threshold_percentage / 100 and
+                abs(tab_heel[-1][1] - tab_heel[before][1]) < abs(tab_heel[before][1]) * threshold_percentage / 100 and
+                abs(tab_heel[-1][2] - tab_heel[before][2]) < abs(tab_heel[before][2]) * threshold_percentage / 100 and
+                abs(tab_heel[-1][3] - tab_heel[before][3]) < abs(tab_heel[before][3]) * threshold_percentage / 100
+        ):
+            threshold_percentage_hip = 3
+            # print(f"diff =  {diff}, hip = {tab_hip[-1][1]}, hip_before = {tab_hip[before][1]}, heel = {tab_heel[-1][1]}")
+            # print(tab_hip[-1][1], tab_hip[before][1])
+            # print(tab_hip[-1][1] - tab_hip[before][1], diff / 6)
+            if abs(tab_hip[-1][1] - tab_hip[before][1]) > abs(tab_hip[before][1]) * threshold_percentage_hip / 100:
+                return True
+    return False
+
+
+def print_skielet(results, frame, h, w):
+    for id, landmark in enumerate(results.pose_landmarks.landmark):
+        if id in {11, 12, 25, 26, 23, 24, 29, 30, 31, 32}:
+            cx, cy = int(landmark.x * w), int(landmark.y * h)
+            cv2.circle(frame, (cx, cy), 5, (255, 0, 0), cv2.FILLED)
+            point_name = point_names.get(id, "unknown")
+            cv2.putText(frame, point_name, (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
+
 
 if __name__ == "__main__":
     main()
