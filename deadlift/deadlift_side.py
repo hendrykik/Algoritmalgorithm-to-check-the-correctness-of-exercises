@@ -5,9 +5,9 @@ mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
 def main():
-    cap = cv2.VideoCapture('//Users/janzemlo/Inzynierka/squat_vids/front1.mp4')
+    cap = cv2.VideoCapture('//Users/janzemlo/Inzynierka/deadlift_vids/side2.mp4')
 
-    with mp_pose.Pose(min_detection_confidence=0.7, min_tracking_confidence=0.7) as pose:
+    with mp_pose.Pose(min_detection_confidence=0.9, min_tracking_confidence=0.9) as pose:
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
