@@ -1,6 +1,5 @@
 import cv2
 import mediapipe as mp
-from main import point_names
 import math
 
 mp_drawing = mp.solutions.drawing_utils
@@ -28,7 +27,7 @@ def main():
             if results.pose_landmarks:
                 h, w, c = frame.shape
                 if not move_started:
-                    if not check_move(tab_hip, tab_foot_index, tab_heel, fps, w, h):
+                    if not check_squad_started(tab_hip, tab_foot_index, tab_heel, fps, w, h):
 
                         tab_hip.append((
                             int(results.pose_landmarks.landmark[23].x * w),
@@ -78,7 +77,7 @@ def main():
                     first_squat = True
                     check_knee(tab_knee, tab_shoulder)
 
-                print_skielet(results, frame, h, w)
+                print_skeleton(results, frame)
 
             cv2.imshow('Pose Estimation', frame)
 
@@ -105,7 +104,6 @@ def check_max_depth(tab_hip, fps):
 
 
 def check_knee(tab_knee, tab_shoulder):
-    # print(tab_knee, tab_shoulder)
     if (tab_knee[0] > tab_shoulder[0] and
             tab_knee[1] < tab_shoulder[1]
     ):
@@ -121,14 +119,14 @@ def check_feet(tab_heel, tabl_foot_index, tab_shoulder):
 
     threshold_percentage = 10
     if abs(abs(tab_heel[2] - tab_heel[0])) - abs(tab_shoulder[1] - tab_shoulder[0]) < abs(tab_shoulder[1] - tab_shoulder[0]) * threshold_percentage / 100:
-        print("Dobrze ramiona i stopy są na takiej samej szerokosci")
+        print("Dobrze ramiona i stop fy są na takiej samej szerokosci")
 
     # print((abs(tab_heel[2] - tab_heel[0])), abs(tab_shoulder[1] - tab_shoulder[0]))
     # print(abs(tab_shoulder[1] - tab_shoulder[0]) * threshold_percentage / 100)
     #print(abs(tab_heel[0] - tab_shoulder[0]), abs(tab_shoulder[0]) * threshold_percentage / 100)
 
 
-def check_move(tab_hip, tab_heel, tab_foot_index, fps, w, h):
+def check_squad_started(tab_hip, tab_heel, tab_foot_index, fps, w, h):
     before = int(len(tab_hip) - fps / 2)
     if before > 0:
         threshold_percentage = 0.7
@@ -146,13 +144,10 @@ def check_move(tab_hip, tab_heel, tab_foot_index, fps, w, h):
     return False
 
 
-def print_skielet(results, frame, h, w):
-    for id, landmark in enumerate(results.pose_landmarks.landmark):
-        if id in {11, 12, 25, 26, 23, 24, 29, 30, 31, 32}:
-            cx, cy = int(landmark.x * w), int(landmark.y * h)
-            cv2.circle(frame, (cx, cy), 5, (255, 0, 0), cv2.FILLED)
-            point_name = point_names.get(id, "unknown")
-            cv2.putText(frame, point_name, (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
+def print_skeleton(results, frame):
+    if results.pose_landmarks:
+        mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+
 
 
 if __name__ == "__main__":
