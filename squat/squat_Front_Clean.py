@@ -167,6 +167,7 @@ def check_feet(tab_heel, tabl_foot_index, tab_shoulder):
     angle_left = int(calculate_angle(tabl_foot_index[2], tabl_foot_index[3], tab_heel[2], tab_heel[3]))
     angle_right = int(calculate_angle(tab_heel[0], tab_heel[1], tabl_foot_index[0], tabl_foot_index[1]))
 
+    print("Setup with your toes pointing about 30° out")
     print(f"Left foot angle is {angle_left} degrees")
     print(f"Right foot angle is {angle_right} degrees")
 

@@ -16,7 +16,7 @@ def main():
     deadlift_count = 0
     deadlift_started, deadlift_ended, deadlift_completed = False, False, False
 
-    with mp_pose.Pose(min_detection_confidence=0.7, min_tracking_confidence=0.7) as pose:
+    with mp_pose.Pose(min_detection_confidence=0.9, min_tracking_confidence=0.95) as pose:
         while cap.isOpened():
             ret, frame = read_frame(cap)
             if not ret:

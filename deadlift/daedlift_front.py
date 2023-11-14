@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import time
+import math
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
@@ -26,7 +27,7 @@ def main():
 
             if results.pose_landmarks:
                 h, w = frame.shape[:2]
-                deadlift_count_started, deadlift_count_ended, deadlift_completed = \
+                deadlift_started, deadlift_ended, deadlift_completed = \
                     process_deadlift_phases(results, tabs, fps, w, h, start_time,
                                             deadlift_started, deadlift_ended, deadlift_count)
 
@@ -98,6 +99,7 @@ def process_deadlift_phases(results, tabs, fps, w, h, start_time, deadlift_start
                 ))
             else:
                 deadlift_started = True
+                check_feet(tabs['heel'][-1], tabs['foot_index'][-1])
                 tabs['deadlift_start_time'] = time.time() - start_time  # Record the start time of the deadlift
                 tabs['shoulder_started'] = [
                     int(results.pose_landmarks.landmark[11].x * w),
@@ -168,7 +170,6 @@ def check_deadlift_started(tab_shoulder, tab_hip, fps):
                 -diff_hip > abs(tab_hip[before][1]) * threshold_percentage_hip / 100 and
                 -diff_shoulder > abs(tab_shoulder[before][1]) * threshold_percentage_shoulder / 100
         ):
-            print("Deadlift start detected")
             return True
     return False
 
@@ -221,6 +222,20 @@ def display_frame(frame):
 
 def exit_requested():
     return cv2.waitKey(1) & 0xFF == ord('q')
+
+def check_feet(tab_heel, tabl_foot_index):
+    angle_left = int(calculate_angle(tabl_foot_index[2], tabl_foot_index[3], tab_heel[2], tab_heel[3]))
+    angle_right = int(calculate_angle(tab_heel[0], tab_heel[1], tabl_foot_index[0], tabl_foot_index[1]))
+
+    print("Setup with your toes pointing about 15° out")
+    print(f"Left foot angle is {angle_left} degrees")
+    print(f"Right foot angle is {angle_right} degrees")
+
+
+def calculate_angle(x1, y1, x2, y2):
+    angle_rad = math.atan2(y2 - y1, x2 - x1)
+    angle_deg = math.degrees(angle_rad)
+    return 90 - abs(angle_deg)
 
 
 if __name__ == "__main__":
