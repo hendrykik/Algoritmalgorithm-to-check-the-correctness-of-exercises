@@ -7,8 +7,8 @@ mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
 
-def main():
-    video_path = '//Users/janzemlo/Inzynierka/squat_vids/front1.mp4'
+def squat_Front(video_path, callback):
+    #video_path = '//Users/janzemlo/Inzynierka/squat_vids/front1.mp4'
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)
     start_time = time.time()
@@ -45,11 +45,14 @@ def main():
                     squat_started, squat_ended = False, False
 
                 print_skeleton(results, frame)
+            callback(frame)
 
-            display_frame(frame)
+            #display_frame(frame)
+
             if exit_requested():
                 break
-
+        
+        print_final_analysis(squat_count, start_time)
         cleanup(cap)
 
 
@@ -281,11 +284,11 @@ def check_knee(tab_knee, tab_shoulder):
         print("Adjustment needed: Knees are not wider than shoulders")
 
 
-def print_final_analysis(squat_analysis):
-    for count, depth, knee in squat_analysis:
-        print(f"Squat {count}:")
-        print(f" - Max Depth: {depth}")
-        print(f" - Knee Analysis: {'Correct' if knee else 'Incorrect'}")
+def print_final_analysis(squat_count, start_time):
+    sum_time = str(int(time.time() - start_time))
+    print("\n\nSUMMARY")
+    print(f"You did {squat_count} squats.")
+    print(f"In {sum_time} seconds.")
 
 
 def cleanup(cap):
@@ -301,5 +304,5 @@ def exit_requested():
     return cv2.waitKey(1) & 0xFF == ord('q')
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     squat_Front()

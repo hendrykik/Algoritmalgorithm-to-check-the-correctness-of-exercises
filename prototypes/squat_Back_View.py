@@ -1,6 +1,6 @@
 import cv2
 import mediapipe as mp
-from main import point_names
+from Implementation_of_a_pose_estimation_algorithm_and_application_for_the_analysis_of_exercise_correctness.point_names import point_names
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose

@@ -6,8 +6,8 @@ mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
 
-def main():
-    video_path = '//Users/janzemlo/Inzynierka/squat_vids/side1.mp4'
+def squat_Side(video_path, callback):
+    #video_path = '//Users/janzemlo/Inzynierka/squat_vids/side1.mp4'
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)
     start_time = time.time()
@@ -45,7 +45,7 @@ def main():
                     tabs, max_depths = initialize_tabs(), initialize_max_depths()  # Reset for next squat
                     squat_started, squat_ended = False, False
 
-                display_frame(frame)
+                callback(frame)
             if exit_requested():
                 break
 
@@ -369,5 +369,5 @@ def print_summary(squat_count):
     print(f"\nTotal count of squats is {squat_count}.")
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     squat_Side()

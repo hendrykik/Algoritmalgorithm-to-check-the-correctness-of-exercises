@@ -7,8 +7,8 @@ mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
 
-def main():
-    video_path = '//Users/janzemlo/Inzynierka/deadlift_vids/front1.mp4'
+def deadlift_Front(video_path, callback):
+    # video_path = '//Users/janzemlo/Inzynierka/deadlift_vids/front1.mp4'
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)
     start_time = time.time()
@@ -40,7 +40,7 @@ def main():
 
                 print_skeleton(results, frame)
 
-            display_frame(frame)
+            callback(frame)
             if exit_requested():
                 break
 
@@ -108,10 +108,10 @@ def process_deadlift_phases(results, tabs, fps, w, h, start_time, deadlift_start
                     int(results.pose_landmarks.landmark[12].y * h)
                 ]
                 tabs['hip_started'] = [
-                    int(results.pose_landmarks.landmark[11].x * w),
-                    int(results.pose_landmarks.landmark[11].y * h),
-                    int(results.pose_landmarks.landmark[12].x * w),
-                    int(results.pose_landmarks.landmark[12].y * h)
+                    int(results.pose_landmarks.landmark[23].x * w),
+                    int(results.pose_landmarks.landmark[23].y * h),
+                    int(results.pose_landmarks.landmark[24].x * w),
+                    int(results.pose_landmarks.landmark[24].y * h)
                 ]
                 tabs['heel_before'] = [
                     int(results.pose_landmarks.landmark[29].x * w),
@@ -131,10 +131,10 @@ def process_deadlift_phases(results, tabs, fps, w, h, start_time, deadlift_start
             ]
 
             tabs['hip_end'] = [
-                int(results.pose_landmarks.landmark[11].x * w),
-                int(results.pose_landmarks.landmark[11].y * h),
-                int(results.pose_landmarks.landmark[12].x * w),
-                int(results.pose_landmarks.landmark[12].y * h)
+                int(results.pose_landmarks.landmark[23].x * w),
+                int(results.pose_landmarks.landmark[23].y * h),
+                int(results.pose_landmarks.landmark[24].x * w),
+                int(results.pose_landmarks.landmark[24].y * h)
             ]
         else:
             deadlift_ended = True
@@ -238,5 +238,5 @@ def calculate_angle(x1, y1, x2, y2):
     return 90 - abs(angle_deg)
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     deadlift_Front()

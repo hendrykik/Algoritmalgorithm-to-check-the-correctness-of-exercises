@@ -1,13 +1,13 @@
 import cv2
 import mediapipe as mp
-from main import point_names
+from point_names import point_names
 import time
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
 
-def main():
+def squat_Side():
     cap = cv2.VideoCapture('//Users/janzemlo/Inzynierka/squat_vids/side1.mp4')
     fps = cap.get(cv2.CAP_PROP_FPS)
 
@@ -271,4 +271,4 @@ def print_skielet(results, frame, h, w, left):
 
 
 if __name__ == "__main__":
-    main()
+    squat_Side()
