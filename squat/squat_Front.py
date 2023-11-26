@@ -18,6 +18,8 @@ def squat_Front(video_path, callback):
     squat_started, squat_ended, squat_completed = False, False, False
     tab_knee, tab_shoulder = [], []
 
+    print_tips()
+
     with mp_pose.Pose(min_detection_confidence=0.7, min_tracking_confidence=0.7) as pose:
         while cap.isOpened():
             ret, frame = read_frame(cap)
@@ -38,8 +40,8 @@ def squat_Front(video_path, callback):
 
                 if squat_completed:
                     squat_count += 1
-                    print(f"Start of {squat_count} squat at {tabs['squat_start_time']} seconds")
-                    print(f"End of {squat_count} squat at {tabs['squat_end_time']} seconds")
+                    print(f"Początek {squat_count + 1} przysiadu w {tabs['squat_start_time']} sekundzie.")
+                    print(f"Koniec {squat_count + 1} przysiadu w {tabs['squat_end_time']} sekundzie.")
                     check_knee(tab_knee, tab_shoulder)
                     tabs = initialize_tabs()
                     squat_started, squat_ended = False, False
@@ -52,7 +54,7 @@ def squat_Front(video_path, callback):
             if exit_requested():
                 break
         
-        print_final_analysis(squat_count, start_time)
+        print_summary(squat_count, start_time)
         cleanup(cap)
 
 
@@ -132,19 +134,6 @@ def process_squat_phases(results, tabs, fps, w, h, start_time, squat_started, sq
             squat_completed = True
             tabs['squat_end_time'] = time.time() - start_time
 
-    elif squat_completed:
-        # Print the start and end time for the current squat
-        print(f"Start of {squat_count + 1} squat at {tabs['squat_start_time']} seconds")
-        print(f"End of {squat_count + 1} squat at {tabs['squat_end_time']} seconds")
-
-        # Reset variables for next squat
-        squat_started = False
-        squat_ended = False
-        tabs = initialize_tabs()
-        tabs['squat_start_time'] = 0
-        tabs['squat_end_time'] = 0
-        squat_count += 1
-
     return squat_started, squat_ended, squat_completed
 
 
@@ -170,9 +159,8 @@ def check_feet(tab_heel, tabl_foot_index, tab_shoulder):
     angle_left = int(calculate_angle(tabl_foot_index[2], tabl_foot_index[3], tab_heel[2], tab_heel[3]))
     angle_right = int(calculate_angle(tab_heel[0], tab_heel[1], tabl_foot_index[0], tabl_foot_index[1]))
 
-    print("Setup with your toes pointing about 30° out")
-    print(f"Left foot angle is {angle_left} degrees")
-    print(f"Right foot angle is {angle_right} degrees")
+    print(f"Lewa stopa jes pod kątem {angle_left} stopni.")
+    print(f"Prawa stopa jes pod kątem {angle_right} stopni.")
 
     threshold_percentage = 10
 
@@ -182,9 +170,9 @@ def check_feet(tab_heel, tabl_foot_index, tab_shoulder):
         heels_width = abs(tab_heel[2] - tab_heel[0])  # Assuming this is the horizontal distance between heels
 
         if abs(heels_width - shoulders_width) < shoulders_width * threshold_percentage / 100:
-            print("Good, the width of shoulders and feet are approximately the same")
+            print("Dobrze: szerokość ramion i stóp jest w przybliżeniu taka sama.")
         else:
-            print("Adjustment needed: The width of shoulders and feet differ significantly")
+            print("Źle: szerokość ramion i stóp powinna być podobna.")
 
 
 def calculate_angle(x1, y1, x2, y2):
@@ -279,16 +267,25 @@ def check_knee(tab_knee, tab_shoulder):
 
     # Check if both knees are outside the shoulders' horizontal positions
     if left_knee_x > left_shoulder_x and right_knee_x < right_shoulder_x:
-        print("Correct: Knees are wider than shoulders")
+        print("Dobrze: Kolana są szersze niż ramiona")
     else:
-        print("Adjustment needed: Knees are not wider than shoulders")
+        print("Źle: Kolana powinny być szerzej niż ramiona")
 
 
-def print_final_analysis(squat_count, start_time):
+def print_tips():
+    print("Wskazówki po poprawnego wykanania przysiadu:")
+    print("Cały czas powinny być spięty brzuch.")
+    print("Kolana powinny być szersze niż ramiona")
+    print("Szerokość ramion i stóp powinna być w przybliżeniu taka sama.")
+    print("Stopy powinny być skierowane na zewnątrz pod kątem około 30 stopni.")
+    print("\n")
+
+
+def print_summary(squat_count, start_time):
     sum_time = str(int(time.time() - start_time))
-    print("\n\nSUMMARY")
-    print(f"You did {squat_count} squats.")
-    print(f"In {sum_time} seconds.")
+    print("\nPodsumowanie")
+    print(f"Zrobiłeś {squat_count} przysiadów.")
+    print(f"W {sum_time} sekund.")
 
 
 def cleanup(cap):

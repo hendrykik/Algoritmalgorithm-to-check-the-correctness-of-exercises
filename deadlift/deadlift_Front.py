@@ -17,6 +17,8 @@ def deadlift_Front(video_path, callback):
     deadlift_count = 0
     deadlift_started, deadlift_ended, deadlift_completed = False, False, False
 
+    print_tips()
+
     with mp_pose.Pose(min_detection_confidence=0.7, min_tracking_confidence=0.7) as pose:
         while cap.isOpened():
             ret, frame = read_frame(cap)
@@ -33,8 +35,8 @@ def deadlift_Front(video_path, callback):
 
                 if deadlift_completed:
                     deadlift_count += 1
-                    print(f"Start of {deadlift_count} deadlift at {tabs['deadlift_start_time']} seconds")
-                    print(f"End of {deadlift_count} deadlift at {tabs['deadlift_end_time']} seconds")
+                    print(f"Początek  {deadlift_count} martwego ciągu w {tabs['deadlift_start_time']} sekundzie.")
+                    print(f"Koniec {deadlift_count} martwego ciągu w {tabs['deadlift_end_time']} sekundzie.")
                     tabs = initialize_tabs()
                     deadlift_started, deadlift_ended = False, False
 
@@ -44,6 +46,7 @@ def deadlift_Front(video_path, callback):
             if exit_requested():
                 break
 
+        print_summary(deadlift_count, start_time)
         cleanup(cap)
 
 
@@ -51,7 +54,8 @@ def initialize_tabs():
     return {
         'hip': [], 'heel': [], 'foot_index': [], 'knee': [],
         'shoulder': [], 'shoulder_started': [], 'shoulder_end': [],
-        'hip_started': [], 'hip_end': [],
+        'hip_started': [], 'hip_end': [], 'elbows_started': [], 
+        'wrists_started': [],
         'deadlift_start_time': 0, 'deadlift_end_time': 0
     }
 
@@ -119,6 +123,22 @@ def process_deadlift_phases(results, tabs, fps, w, h, start_time, deadlift_start
                     int(results.pose_landmarks.landmark[30].x * w),
                     int(results.pose_landmarks.landmark[30].y * h)
                 ]
+                tabs['elbows_started'] = [
+                    int(results.pose_landmarks.landmark[13].x * w),
+                    int(results.pose_landmarks.landmark[13].y * h),
+                    int(results.pose_landmarks.landmark[14].x * w),
+                    int(results.pose_landmarks.landmark[14].y * h)
+                ]
+                tabs['wrists_started'] = [
+                    int(results.pose_landmarks.landmark[15].x * w),
+                    int(results.pose_landmarks.landmark[15].y * h),
+                    int(results.pose_landmarks.landmark[16].x * w),
+                    int(results.pose_landmarks.landmark[16].y * h)
+                ]
+                if not check_arms(tabs['shoulder_started'], tabs['elbows_started'], tabs['wrists_started']):
+                    print("Wskazówka: ręce powinny być cały czas proste.")
+                else:
+                    print("Dobrze, ręce są proste.")
 
     elif not deadlift_ended:
         if not check_deadlift_ended(tabs['shoulder_end'], tabs['shoulder_started'],
@@ -140,19 +160,6 @@ def process_deadlift_phases(results, tabs, fps, w, h, start_time, deadlift_start
             deadlift_ended = True
             deadlift_completed = True
             tabs['deadlift_end_time'] = time.time() - start_time
-
-    elif deadlift_completed:
-        # Print the start and end time for the current deadlift
-        print(f"Start of {deadlift_count + 1} deadlift at {tabs['deadlift_start_time']} seconds")
-        print(f"End of {deadlift_count + 1} deadlift at {tabs['deadlift_end_time']} seconds")
-
-        # Reset variables for next deadlift
-        deadlift_started = False
-        deadlift_ended = False
-        tabs = initialize_tabs()
-        tabs['deadlift_start_time'] = 0
-        tabs['deadlift_end_time'] = 0
-        deadlift_count += 1
 
     return deadlift_started, deadlift_ended, deadlift_completed
 
@@ -227,15 +234,46 @@ def check_feet(tab_heel, tabl_foot_index):
     angle_left = int(calculate_angle(tabl_foot_index[2], tabl_foot_index[3], tab_heel[2], tab_heel[3]))
     angle_right = int(calculate_angle(tab_heel[0], tab_heel[1], tabl_foot_index[0], tabl_foot_index[1]))
 
-    print("Setup with your toes pointing about 15° out")
-    print(f"Left foot angle is {angle_left} degrees")
-    print(f"Right foot angle is {angle_right} degrees")
+    print(f"Lewa stopa jes pod kątem {angle_left} stopni.")
+    print(f"Prawa stopa jes pod kątem {angle_right} stopni.")
+
+
+def check_arms(tab_shoulder, tab_elbow, tab_wrist):
+    a1 = (tab_wrist[1] - tab_elbow[1]) / (tab_wrist[0] - tab_elbow[0])
+    b1 = tab_elbow[1] - a1 * tab_elbow[0]
+    a2 = (tab_wrist[3] - tab_elbow[3]) / (tab_wrist[2] - tab_elbow[2])
+    b2 = tab_elbow[3] - a2 * tab_elbow[2]
+
+    y_shoulder_1 = a1 * tab_shoulder[0] + b1
+    y_shoulder_2 = a2 * tab_shoulder[2] + b2
+
+    if (min(tab_elbow[1], tab_wrist[1]) <= y_shoulder_1 <= max(tab_elbow[1], tab_wrist[1]) and 
+        min(tab_elbow[3], tab_wrist[3]) <= y_shoulder_2 <= max(tab_elbow[3], tab_wrist[3])):
+        return True
+    else:
+        return False
 
 
 def calculate_angle(x1, y1, x2, y2):
     angle_rad = math.atan2(y2 - y1, x2 - x1)
     angle_deg = math.degrees(angle_rad)
     return 90 - abs(angle_deg)
+
+
+def print_tips():
+    print("Wskazówki po poprawnego wykanania martwego ciągu:")
+    print("Stopy powinny być skierowane na zewnątrz pod kątem około 15 stopni.")
+    print("Ręce powinny być cały czas proste.")
+    print("Cały czas powinny być spięty brzuch.")
+    print("\n")
+
+
+def print_summary(deadlift_count, start_time):
+    sum_time = str(int(time.time() - start_time))
+    print("\nPodsumowanie")
+    print(f"Zrobiłeś {deadlift_count} martwych ciągów.")
+    print(f"W {sum_time} sekund.")
+
 
 
 # if __name__ == "__main__":

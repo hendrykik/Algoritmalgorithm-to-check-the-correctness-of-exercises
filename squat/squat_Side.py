@@ -16,6 +16,8 @@ def squat_Side(video_path, callback):
     squat_started, squat_ended, left = False, False, True
     squat_count = 0
 
+    print_tips()
+
     with mp_pose.Pose(min_detection_confidence=0.9, min_tracking_confidence=0.95) as pose:
         while cap.isOpened():
             ret, frame = read_frame(cap)
@@ -39,9 +41,9 @@ def squat_Side(video_path, callback):
 
                 if squat_completed:
                     squat_count += 1
-                    print(f"Start of {squat_count} squat at {tabs['squat_start_time']} seconds")
-                    print(f"End of {squat_count} squat at {tabs['squat_end_time']} seconds")
-                    post_process_analysis(max_depths, w, tabs, squat_count)
+                    print(f"Początek {squat_count} przysiadu w {tabs['squat_start_time']} sekundzie.")
+                    print(f"Koniec {squat_count} przysiadu w {tabs['squat_end_time']} sekundzie.")
+                    print_summary(max_depths, w, tabs, squat_count)
                     tabs, max_depths = initialize_tabs(), initialize_max_depths()  # Reset for next squat
                     squat_started, squat_ended = False, False
 
@@ -49,9 +51,9 @@ def squat_Side(video_path, callback):
             if exit_requested():
                 break
 
+        print_summary_end(squat_count, start_time)
         cleanup(cap)
 
-    print_summary(squat_count)
 
 
 def initialize_tabs():
@@ -206,18 +208,6 @@ def process_squat_phases(results, tabs, max_depths, w, h, fps, start_time, squat
             squat_completed = True
             tabs['squat_end_time'] = time.time() - start_time
 
-    elif squat_completed:
-        # Print the start and end time for the current squat
-        print(f"Start of {squat_count + 1} squat at {tabs['squat_start_time']} seconds")
-        print(f"End of {squat_count + 1} squat at {tabs['squat_end_time']} seconds")
-
-        # Reset variables for next squat
-        squat_started = False
-        squat_ended = False
-        tabs['squat_start_time'] = 0
-        tabs['squat_end_time'] = 0
-        squat_count += 1
-
     return squat_started, squat_ended, max_depths, squat_completed
 
 
@@ -331,42 +321,49 @@ def exit_requested():
     return cv2.waitKey(1) & 0xFF == ord('q')
 
 
-def post_process_analysis(max_depths, w, tabs, squat_count):
+def print_tips():
+    print("Wskazówki po poprawnego wykanania przysiadu:")
+    print("Cały czas powinny być spięty brzuch.")
+    print("Nie powinno się się odrywać stóp podczas wykonywania ćwiczenia.")
+    print("Poprawna głębokość przysiadu jest wtedy, kiedy wykość koland i bioder jest taka sama.")
+    print("Piszczele powinny być pod kątem 90 stopni względem ziemi na końcu przysiadu.")
+    print("\n")
+
+
+def print_summary_end(squat_count, start_time):
+    sum_time = str(int(time.time() - start_time))
+    print("\nPodsumowanie")
+    print(f"Zrobiłeś {squat_count} przysiadów.")
+    print(f"W {sum_time} sekund.")
+
+def print_summary(max_depths, w, tabs, squat_count):
     depth_correct = check_depth(max_depths['hip'], max_depths['knee'])
     shins_correct = check_shins(max_depths['knee_x'], max_depths['foot_x'], w)
 
-    depth_message = "Correct squat depth" if depth_correct else "Incorrect squat depth"
-    shins_message = "Correct shin positioning" if shins_correct else "Incorrect shin positioning"
+    depth_message = "Dobrze: poprawna głębokość przysiadu." if depth_correct else "Źle: niepoprawna głębokość przysiadu."
+    shins_message = "Dobrze: piszczele są pod kątem 90 stopni względem ziemi." if shins_correct else "Źle: piszczele nie są pod kątem 90 stopni względem ziemi."
 
-    print(f"{depth_message} during the {ordinal(squat_count)} squat")
-    print(f"{shins_message} during the {ordinal(squat_count)} squat")
+    print(f"{depth_message} podczas {squat_count} przysiadów.")
+    print(f"{shins_message} podczas {squat_count} przysiadów")
 
     if tabs['neck_sec']:
         print(
-            f"Incorrect neck positioning occurred at seconds: {tabs['neck_sec']} "
-            f"during the {ordinal(squat_count)} squat")
+            f"Nieprawidłowe ułożenie szyi wystąpiło w sekundach: {tabs['neck_sec']} "
+            f"podczas {squat_count} przysiadów.")
     else:
-        print(f"No incorrect neck positioning detected during the {ordinal(squat_count)} squat")
+        print(f"Prawidłowe ułożenie szyi wystąpiło podczas wykonywania każdego przysiadu.")
 
     if tabs['feet_sec']:
-        print(f"Feet lifted off at seconds: {tabs['feet_sec']} during the {ordinal(squat_count)} squat")
+        print(f"Stopy uniosły się w sekund: {tabs['feet_sec']} podczas {squat_count} przysiadów.")
     else:
-        print(f"No feet lifting detected during the {ordinal(squat_count)} squat")
+        print(f"Nie wykryto podnoszenia stóp podczas wykonywania podczas podczas wykonywania każdego przysiadu.")
 
     print('\n')
-
-
-def ordinal(n):
-    return "%d%s" % (n, "th" if 4 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th"))
 
 
 def cleanup(cap):
     cap.release()
     cv2.destroyAllWindows()
-
-
-def print_summary(squat_count):
-    print(f"\nTotal count of squats is {squat_count}.")
 
 
 # if __name__ == "__main__":
