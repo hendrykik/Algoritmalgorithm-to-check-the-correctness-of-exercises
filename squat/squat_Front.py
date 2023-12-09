@@ -40,8 +40,8 @@ def squat_Front(video_path, callback):
 
                 if squat_completed:
                     squat_count += 1
-                    print(f"Początek {squat_count + 1} przysiadu w {tabs['squat_start_time']} sekundzie.")
-                    print(f"Koniec {squat_count + 1} przysiadu w {tabs['squat_end_time']} sekundzie.")
+                    print(f"Początek {squat_count} przysiadu w {tabs['squat_start_time']} sekundzie.")
+                    print(f"Koniec {squat_count} przysiadu w {tabs['squat_end_time']} sekundzie.")
                     check_knee(tab_knee, tab_shoulder)
                     tabs = initialize_tabs()
                     squat_started, squat_ended = False, False
@@ -275,9 +275,10 @@ def check_knee(tab_knee, tab_shoulder):
 def print_tips():
     print("Wskazówki po poprawnego wykanania przysiadu:")
     print("Cały czas powinny być spięty brzuch.")
-    print("Kolana powinny być szersze niż ramiona")
+    print("Kolana podczas maksymalnej głębokości przysiadu powinny być szersze niż ramiona.")
     print("Szerokość ramion i stóp powinna być w przybliżeniu taka sama.")
     print("Stopy powinny być skierowane na zewnątrz pod kątem około 30 stopni.")
+    print("Kolana powinny być szerzej niż ramiona.")
     print("\n")
 
 

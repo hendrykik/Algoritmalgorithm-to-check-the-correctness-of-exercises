@@ -28,6 +28,7 @@ def squat_Side(video_path, callback):
 
             if results.pose_landmarks:
                 h, w = frame.shape[:2]
+
                 left, heel_index = determine_side_and_heel_index(results)
 
                 print_skeleton(results, frame)
@@ -325,8 +326,9 @@ def print_tips():
     print("Wskazówki po poprawnego wykanania przysiadu:")
     print("Cały czas powinny być spięty brzuch.")
     print("Nie powinno się się odrywać stóp podczas wykonywania ćwiczenia.")
-    print("Poprawna głębokość przysiadu jest wtedy, kiedy wykość koland i bioder jest taka sama.")
+    print("Poprawna głębokość przysiadu jest wtedy, kiedy wysokość kolan i bioder jest taka sama.")
     print("Piszczele powinny być pod kątem 90 stopni względem ziemi na końcu przysiadu.")
+    print("Głowa powinna być w naturalnej linii ciągłości z kręgosłupem przez cały czas trwania ćwiczenia.")
     print("\n")
 
 
@@ -342,21 +344,19 @@ def print_summary(max_depths, w, tabs, squat_count):
 
     depth_message = "Dobrze: poprawna głębokość przysiadu." if depth_correct else "Źle: niepoprawna głębokość przysiadu."
     shins_message = "Dobrze: piszczele są pod kątem 90 stopni względem ziemi." if shins_correct else "Źle: piszczele nie są pod kątem 90 stopni względem ziemi."
-
-    print(f"{depth_message} podczas {squat_count} przysiadów.")
-    print(f"{shins_message} podczas {squat_count} przysiadów")
+    
+    print(depth_message)
+    print(shins_message)
 
     if tabs['neck_sec']:
-        print(
-            f"Nieprawidłowe ułożenie szyi wystąpiło w sekundach: {tabs['neck_sec']} "
-            f"podczas {squat_count} przysiadów.")
+        print(f"Nieprawidłowe ułożenie szyi wystąpiło w sekundach: {tabs['neck_sec']}.")
     else:
         print(f"Prawidłowe ułożenie szyi wystąpiło podczas wykonywania każdego przysiadu.")
 
     if tabs['feet_sec']:
-        print(f"Stopy uniosły się w sekund: {tabs['feet_sec']} podczas {squat_count} przysiadów.")
+        print(f"Stopy uniosły się w sekund: {tabs['feet_sec']} podczas {squat_count} przysiadu.")
     else:
-        print(f"Nie wykryto podnoszenia stóp podczas wykonywania podczas podczas wykonywania każdego przysiadu.")
+        print(f"Nie wykryto podnoszenia stóp podczas wykonywania podczas podczas wykonywania {squat_count} przysiadu.")
 
     print('\n')
 
