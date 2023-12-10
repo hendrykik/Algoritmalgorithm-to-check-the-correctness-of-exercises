@@ -1,2 +1,0 @@
-cap = cv2.VideoCapture('/Users/janzemlo/Desktop/Inzynierka/krotkie.mp4')
-
