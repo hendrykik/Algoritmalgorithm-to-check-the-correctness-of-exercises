@@ -48,7 +48,7 @@ def squat_Side(video_path, callback):
                     tabs, max_depths = initialize_tabs(), initialize_max_depths()  # Reset for next squat
                     squat_started, squat_ended = False, False
 
-                callback(frame)
+            callback(frame)
             if exit_requested():
                 break
 

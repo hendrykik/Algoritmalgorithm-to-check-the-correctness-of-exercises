@@ -26,10 +26,11 @@ def deadlift_Side(video_path, callback):
                 break
 
             results = process_frame(frame, pose)
-            left = determine_side((results.pose_landmarks.landmark[29].y, results.pose_landmarks.landmark[30].y))
 
 
             if results.pose_landmarks:
+                left = determine_side((results.pose_landmarks.landmark[29].y, results.pose_landmarks.landmark[30].y))
+            
                 h, w = frame.shape[:2]
                 deadlift_started, deadlift_ended, deadlift_completed, deadlift_max = \
                     process_deadlift_phases(results, tabs, fps, w, h, start_time,
